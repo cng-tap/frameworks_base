@@ -106,8 +106,8 @@ key 83    NUMPAD_DOT
 # key 84 (undefined)
 key 85    ZENKAKU_HANKAKU
 key 86    BACKSLASH
-key 87    F11
-key 88    F12
+key 87    VOLUME_DOWN
+key 88    VOLUME_UP
 key 89    RO
 # key 90 "KEY_KATAKANA"
 # key 91 "KEY_HIRAGANA"
