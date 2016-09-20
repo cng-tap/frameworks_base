@@ -73,6 +73,8 @@ public class KeyguardStatusView extends GridLayout implements
     private boolean mShowWeather;
     private int mIconNameValue = 0;
     private WeatherController mWeatherController;
+    private int mLockClockFontSize;
+    private int mLockDateFontSize;
 
     //On the first boot, keygard will start to receiver TIME_TICK intent.
     //And onScreenTurnedOff will not get called if power off when keyguard is not started.
@@ -146,6 +148,8 @@ public class KeyguardStatusView extends GridLayout implements
         mClockView = (TextClock) findViewById(R.id.clock_view);
         mDateView.setShowCurrentUserTime(true);
         mClockView.setShowCurrentUserTime(true);
+        //mDateView.setTextSize(TypedValue.COMPLEX_UNIT_SP, mLockDateFontSize);
+        //mClockView.setTextSize(TypedValue.COMPLEX_UNIT_SP, mLockClockFontSize);
         mOwnerInfo = (TextView) findViewById(R.id.owner_info);
         mWeatherView = findViewById(R.id.keyguard_weather_view);
         mWeatherCity = (TextView) findViewById(R.id.city);
@@ -166,11 +170,9 @@ public class KeyguardStatusView extends GridLayout implements
     @Override
     protected void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        mClockView.setTextSize(TypedValue.COMPLEX_UNIT_PX,
-                getResources().getDimensionPixelSize(R.dimen.widget_big_font_size));
+        mDateView.setTextSize(TypedValue.COMPLEX_UNIT_SP, mLockDateFontSize);
+        mClockView.setTextSize(TypedValue.COMPLEX_UNIT_SP, mLockClockFontSize);
         mClockView.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
-        mDateView.setTextSize(TypedValue.COMPLEX_UNIT_PX,
-                getResources().getDimensionPixelSize(R.dimen.widget_label_font_size));
         mOwnerInfo.setTextSize(TypedValue.COMPLEX_UNIT_PX,
                 getResources().getDimensionPixelSize(R.dimen.widget_label_font_size));
     }
@@ -268,11 +270,20 @@ public class KeyguardStatusView extends GridLayout implements
             mWeatherView.setVisibility(View.GONE);
             updateSettings(true);
         } else {
-            mWeatherCity.setText(info.city);
             mWeatherConditionDrawable = info.conditionDrawable;
-            mWeatherCurrentTemp.setText(info.temp);
-            mWeatherConditionText.setText(info.condition);
-            mWeatherView.setVisibility(mShowWeather ? View.VISIBLE : View.GONE);
+
+            if (mWeatherCity != null) {
+                mWeatherCity.setText(info.city);
+            }
+            if (mWeatherCurrentTemp != null) {
+                mWeatherCurrentTemp.setText(info.temp);
+            }
+            if (mWeatherConditionText != null) {
+                mWeatherConditionText.setText(info.condition);
+            }
+            if (mWeatherView != null) {
+                mWeatherView.setVisibility(mShowWeather ? View.VISIBLE : View.GONE);
+            }
             updateSettings(false);
         }
     }
@@ -309,6 +320,14 @@ public class KeyguardStatusView extends GridLayout implements
                 Settings.System.LOCKSCREEN_ALARM_COLOR, 0xFFFFFFFF);
         int lockClockFont = Settings.System.getIntForUser(resolver,
                 Settings.System.LOCK_CLOCK_FONTS, 4, UserHandle.USER_CURRENT);
+        mLockClockFontSize = Settings.System.getIntForUser(resolver,
+                Settings.System.LOCKSCREEN_CLOCK_FONT_SIZE,
+                getResources().getDimensionPixelSize(R.dimen.widget_big_font_size),
+                UserHandle.USER_CURRENT);
+        mLockDateFontSize = Settings.System.getIntForUser(resolver,
+                Settings.System.LOCKSCREEN_DATE_FONT_SIZE,
+                getResources().getDimensionPixelSize(R.dimen.widget_label_font_size),
+                UserHandle.USER_CURRENT);
         int iconNameValue = Settings.System.getInt(resolver,
                 Settings.System.LOCK_SCREEN_WEATHER_CONDITION_ICON, 0);
         boolean colorizeAllIcons = Settings.System.getInt(resolver,
@@ -326,6 +345,7 @@ public class KeyguardStatusView extends GridLayout implements
                 res.getColor(R.color.keyguard_default_icon_color);
         int iconColor = Settings.System.getInt(resolver,
                 Settings.System.LOCK_SCREEN_WEATHER_ICON_COLOR, defaultIconColor);
+
         if (hideMode == 0) {
             if (currentVisibleNotifications > maxAllowedNotifications) {
                 forceHideByNumberOfNotifications = true;
@@ -338,34 +358,31 @@ public class KeyguardStatusView extends GridLayout implements
         if (forceHide) {
             mWeatherView.setVisibility(View.GONE);
         } else {
-            mWeatherView.setVisibility(mShowWeather ? View.VISIBLE : View.GONE);
+            if (mWeatherView != null) {
+                mWeatherView.setVisibility(mShowWeather ? View.VISIBLE : View.GONE);
+            }
         }
-        mWeatherCity.setVisibility(showLocation ? View.VISIBLE : View.INVISIBLE);
-        mWeatherCity.setTextColor(primaryTextColor);
-        mWeatherConditionText.setTextColor(primaryTextColor);
-        mWeatherCurrentTemp.setTextColor(secondaryTextColor);
+        if (mWeatherCity != null) {
+            mWeatherCity.setVisibility(showLocation ? View.VISIBLE : View.INVISIBLE);
+        }
+        if (mWeatherCity != null) {
+            mWeatherCity.setTextColor(primaryTextColor);
+        }
+        if (mWeatherConditionText != null) {
+            mWeatherConditionText.setTextColor(primaryTextColor);
+        }
+        if (mWeatherCurrentTemp != null) {
+            mWeatherCurrentTemp.setTextColor(secondaryTextColor);
+        }
 
-        if (showClock) {
-            mClockView = (TextClock) findViewById(R.id.clock_view);
-            mClockView.setVisibility(View.VISIBLE);
-        } else {
-            mClockView = (TextClock) findViewById(R.id.clock_view);
-            mClockView.setVisibility(View.GONE);
-        }
-        if (showDate) {
-            mDateView = (TextClock) findViewById(R.id.date_view);
-            mDateView.setVisibility(View.VISIBLE);
-        } else {
-            mDateView = (TextClock) findViewById(R.id.date_view);
-            mDateView.setVisibility(View.GONE);
-        }
-        if (showAlarm && nextAlarm != null) {
-            mAlarmStatusView = (TextView) findViewById(R.id.alarm_status);
-            mAlarmStatusView.setVisibility(View.VISIBLE);
-        } else {
-            mAlarmStatusView = (TextView) findViewById(R.id.alarm_status);
-            mAlarmStatusView.setVisibility(View.GONE);
-        }
+        mClockView = (TextClock) findViewById(R.id.clock_view);
+        mClockView.setVisibility(showClock ? View.VISIBLE : View.INVISIBLE);
+
+        mDateView = (TextClock) findViewById(R.id.date_view);
+        mDateView.setVisibility(showDate ? View.VISIBLE : View.INVISIBLE);
+
+        mAlarmStatusView = (TextView) findViewById(R.id.alarm_status);
+        mAlarmStatusView.setVisibility(showAlarm && nextAlarm != null ? View.VISIBLE : View.GONE);
 
         if (lockClockFont == 0) {
             mClockView.setTypeface(Typeface.create("sans-serif", Typeface.NORMAL));
@@ -445,10 +462,16 @@ public class KeyguardStatusView extends GridLayout implements
 
         if (mClockView != null) {
             mClockView.setTextColor(clockColor);
+            if (mLockClockFontSize != getResources().getDimensionPixelSize(R.dimen.widget_big_font_size)) {
+                mClockView.setTextSize(TypedValue.COMPLEX_UNIT_SP, mLockClockFontSize);
+            }
         }
 
         if (mDateView != null) {
             mDateView.setTextColor(clockDateColor);
+            if (mLockDateFontSize != getResources().getDimensionPixelSize(R.dimen.widget_label_font_size)) {
+                mDateView.setTextSize(TypedValue.COMPLEX_UNIT_SP, mLockDateFontSize);
+            }
         }
 
         if (mOwnerInfo != null) {
@@ -464,14 +487,21 @@ public class KeyguardStatusView extends GridLayout implements
             mWeatherController.updateWeather();
         }
 
-        mWeatherConditionImage.setImageDrawable(null);
+        if (mWeatherConditionImage != null) {
+            mWeatherConditionImage.setImageDrawable(null);
+        }
+
         Drawable weatherIcon = mWeatherConditionDrawable;
+        Drawable coloredWeatherIcon =
+                ImageHelper.getColoredDrawable(weatherIcon, iconColor);
         if (iconNameValue == 0 || colorizeAllIcons) {
-            Bitmap coloredWeatherIcon =
-                    ImageHelper.getColoredBitmap(weatherIcon, iconColor);
-            mWeatherConditionImage.setImageBitmap(coloredWeatherIcon);
+            if (mWeatherConditionImage != null) {
+                mWeatherConditionImage.setImageDrawable(weatherIcon);
+            }
         } else {
-            mWeatherConditionImage.setImageDrawable(weatherIcon);
+            if (mWeatherConditionImage != null) {
+                mWeatherConditionImage.setImageDrawable(coloredWeatherIcon);
+            }
         }
     }
 

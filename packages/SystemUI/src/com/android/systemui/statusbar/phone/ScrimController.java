@@ -22,6 +22,8 @@ import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.animation.DecelerateInterpolator;
@@ -45,9 +47,9 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener,
     public static final long ANIMATION_DURATION = 220;
     public static final Interpolator KEYGUARD_FADE_OUT_INTERPOLATOR
             = new PathInterpolator(0f, 0, 0.7f, 1f);
+    public static final float SCRIM_BEHIND_ALPHA_KEYGUARD = 0.45f;
 
     private static final float SCRIM_BEHIND_ALPHA = 0.62f;
-    private static final float SCRIM_BEHIND_ALPHA_KEYGUARD = 0.45f;
     private static final float SCRIM_BEHIND_ALPHA_UNLOCKING = 0.2f;
     private static final float SCRIM_IN_FRONT_ALPHA = 0.75f;
     private static final int TAG_KEY_ANIM = R.id.scrim;
@@ -88,6 +90,8 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener,
     private boolean mForceHideScrims;
     private boolean mSkipFirstFrame;
     private boolean mDontAnimateBouncerChanges;
+    private float mOverlayAlpha;
+    private float mSecurityOverlayAlpha;
 
     public ScrimController(ScrimView scrimBehind, ScrimView scrimInFront, View headsUpScrim,
             boolean scrimSrcEnabled) {
@@ -98,6 +102,20 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener,
         mUnlockMethodCache = UnlockMethodCache.getInstance(context);
         mScrimSrcEnabled = scrimSrcEnabled;
         updateHeadsUpScrim(false);
+        mOverlayAlpha = Settings.System.getFloatForUser(context.getContentResolver(),
+                Settings.System.LOCKSCREEN_ALPHA, 0.45f, UserHandle.USER_CURRENT);
+        mSecurityOverlayAlpha = Settings.System.getFloatForUser(context.getContentResolver(),
+                Settings.System.LOCKSCREEN_SECURITY_ALPHA, 0.75f, UserHandle.USER_CURRENT);
+    }
+
+    public void setOverlayAlpha(float alpha) {
+        mOverlayAlpha = alpha;
+        scheduleUpdate();
+    }
+
+    public void setSecurityOverlayAlpha(float alpha) {
+        mSecurityOverlayAlpha = alpha;
+        scheduleUpdate();
     }
 
     public void setKeyguardShowing(boolean showing) {
@@ -228,16 +246,16 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener,
             float fraction = 1 - behindFraction;
             fraction = (float) Math.pow(fraction, 0.8f);
             behindFraction = (float) Math.pow(behindFraction, 0.8f);
-            setScrimInFrontColor(fraction * SCRIM_IN_FRONT_ALPHA);
-            setScrimBehindColor(behindFraction * SCRIM_BEHIND_ALPHA_KEYGUARD);
+            setScrimInFrontColor(fraction * mSecurityOverlayAlpha);
+            setScrimBehindColor(behindFraction * mOverlayAlpha);
         } else if (mBouncerShowing) {
-            setScrimInFrontColor(SCRIM_IN_FRONT_ALPHA);
+            setScrimInFrontColor(mSecurityOverlayAlpha);
             setScrimBehindColor(0f);
         } else {
             float fraction = Math.max(0, Math.min(mFraction, 1));
             setScrimInFrontColor(0f);
             setScrimBehindColor(fraction
-                    * (SCRIM_BEHIND_ALPHA_KEYGUARD - SCRIM_BEHIND_ALPHA_UNLOCKING)
+                    * (mOverlayAlpha - SCRIM_BEHIND_ALPHA_UNLOCKING)
                     + SCRIM_BEHIND_ALPHA_UNLOCKING);
         }
     }
@@ -255,7 +273,7 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener,
         }
     }
 
-    private void setScrimBehindColor(float alpha) {
+    public void setScrimBehindColor(float alpha) {
         setScrimColor(mScrimBehind, alpha);
     }
 

@@ -836,6 +836,16 @@ public abstract class ActivityManagerNative extends Binder implements IActivityM
             return true;
         }
 
+        case GET_ACTIVITY_FOR_TASK_TRANSACTION: {
+            data.enforceInterface(IActivityManager.descriptor);
+            int task = data.readInt();
+            boolean onlyRoot = data.readInt() != 0;
+            IBinder res = getActivityForTask(task, onlyRoot);
+            reply.writeNoException();
+            reply.writeStrongBinder(res);
+            return true;
+        }
+
         case GET_CONTENT_PROVIDER_TRANSACTION: {
             data.enforceInterface(IActivityManager.descriptor);
             IBinder b = data.readStrongBinder();
@@ -1600,9 +1610,10 @@ public abstract class ActivityManagerNative extends Binder implements IActivityM
 
         case START_BACKUP_AGENT_TRANSACTION: {
             data.enforceInterface(IActivityManager.descriptor);
-            ApplicationInfo info = ApplicationInfo.CREATOR.createFromParcel(data);
+            String packageName = data.readString();
             int backupRestoreMode = data.readInt();
-            boolean success = bindBackupAgent(info, backupRestoreMode);
+            int userId = data.readInt();
+            boolean success = bindBackupAgent(packageName, backupRestoreMode, userId);
             reply.writeNoException();
             reply.writeInt(success ? 1 : 0);
             return true;
@@ -2098,9 +2109,10 @@ public abstract class ActivityManagerNative extends Binder implements IActivityM
 
         case SHOW_BOOT_MESSAGE_TRANSACTION: {
             data.enforceInterface(IActivityManager.descriptor);
+            ApplicationInfo appInfo = ApplicationInfo.CREATOR.createFromParcel(data);
             CharSequence msg = TextUtils.CHAR_SEQUENCE_CREATOR.createFromParcel(data);
             boolean always = data.readInt() != 0;
-            showBootMessage(msg, always);
+            showBootMessage(appInfo, msg, always);
             reply.writeNoException();
             return true;
         }
@@ -3566,6 +3578,21 @@ class ActivityManagerProxy implements IActivityManager
         data.recycle();
         reply.recycle();
     }
+
+    public IBinder getActivityForTask(int task, boolean onlyRoot) throws RemoteException
+    {
+        Parcel data = Parcel.obtain();
+        Parcel reply = Parcel.obtain();
+        data.writeInterfaceToken(IActivityManager.descriptor);
+        data.writeInt(task);
+        data.writeInt(onlyRoot ? 1 : 0);
+        mRemote.transact(GET_ACTIVITY_FOR_TASK_TRANSACTION, data, reply, 0);
+        reply.readException();
+        IBinder res = reply.readStrongBinder();
+        data.recycle();
+        reply.recycle();
+        return res;
+    }
     public int getTaskForActivity(IBinder token, boolean onlyRoot) throws RemoteException
     {
         Parcel data = Parcel.obtain();
@@ -3874,13 +3901,14 @@ class ActivityManagerProxy implements IActivityManager
         return binder;
     }
 
-    public boolean bindBackupAgent(ApplicationInfo app, int backupRestoreMode)
+    public boolean bindBackupAgent(String packageName, int backupRestoreMode, int userId)
             throws RemoteException {
         Parcel data = Parcel.obtain();
         Parcel reply = Parcel.obtain();
         data.writeInterfaceToken(IActivityManager.descriptor);
-        app.writeToParcel(data, 0);
+        data.writeString(packageName);
         data.writeInt(backupRestoreMode);
+        data.writeInt(userId);
         mRemote.transact(START_BACKUP_AGENT_TRANSACTION, data, reply, 0);
         reply.readException();
         boolean success = reply.readInt() != 0;
@@ -5283,10 +5311,12 @@ class ActivityManagerProxy implements IActivityManager
         return res;
     }
 
-    public void showBootMessage(CharSequence msg, boolean always) throws RemoteException {
+    public void showBootMessage(ApplicationInfo appInfo, CharSequence msg,
+            boolean always) throws RemoteException {
         Parcel data = Parcel.obtain();
         Parcel reply = Parcel.obtain();
         data.writeInterfaceToken(IActivityManager.descriptor);
+        appInfo.writeToParcel(data, 0);
         TextUtils.writeToParcel(msg, data, 0);
         data.writeInt(always ? 1 : 0);
         mRemote.transact(SHOW_BOOT_MESSAGE_TRANSACTION, data, reply, 0);

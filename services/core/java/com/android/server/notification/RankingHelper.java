@@ -52,12 +52,13 @@ public class RankingHelper implements RankingConfig {
     private static final String ATT_PEEKABLE = "peekable";
     private static final String ATT_VISIBILITY = "visibility";
     private static final String ATT_KEYGUARD = "keyguard";
+    private static final String ATT_HALO = "halo";
 
     private static final int DEFAULT_PRIORITY = Notification.PRIORITY_DEFAULT;
     private static final boolean DEFAULT_PEEKABLE = true;
     private static final int DEFAULT_VISIBILITY =
             NotificationListenerService.Ranking.VISIBILITY_NO_OVERRIDE;
-    private static final boolean DEFAULT_KEYGUARD = true;
+    private static final boolean DEFAULT_HALO = true;
 
     private final NotificationSignalExtractor[] mSignalExtractors;
     private final NotificationComparator mPreliminaryComparator = new NotificationComparator();
@@ -145,7 +146,10 @@ public class RankingHelper implements RankingConfig {
                     int priority = safeInt(parser, ATT_PRIORITY, DEFAULT_PRIORITY);
                     boolean peekable = safeBool(parser, ATT_PEEKABLE, DEFAULT_PEEKABLE);
                     int vis = safeInt(parser, ATT_VISIBILITY, DEFAULT_VISIBILITY);
-                    boolean keyguard = safeBool(parser, ATT_KEYGUARD, DEFAULT_KEYGUARD);
+                    int keyguard = safeInt(parser, ATT_KEYGUARD,
+                            Notification.SHOW_ALL_NOTI_ON_KEYGUARD);
+                    boolean halo = safeBool(parser, ATT_HALO, DEFAULT_HALO);
+
                     String name = parser.getAttributeValue(null, ATT_NAME);
 
                     if (!TextUtils.isEmpty(name)) {
@@ -175,8 +179,11 @@ public class RankingHelper implements RankingConfig {
                         if (vis != DEFAULT_VISIBILITY) {
                             r.visibility = vis;
                         }
-                        if (keyguard != DEFAULT_KEYGUARD) {
+                        if (keyguard != Notification.SHOW_ALL_NOTI_ON_KEYGUARD) {
                             r.keyguard = keyguard;
+                        }
+                        if (halo != DEFAULT_HALO) {
+                            r.halo = halo;
                         }
                     }
                 }
@@ -206,8 +213,10 @@ public class RankingHelper implements RankingConfig {
         for (int i = N - 1; i >= 0; i--) {
             final Record r = mRecords.valueAt(i);
             if (r.priority == DEFAULT_PRIORITY && r.peekable == DEFAULT_PEEKABLE
-                    && r.visibility == DEFAULT_VISIBILITY && r.keyguard == DEFAULT_KEYGUARD) {
-                mRecords.remove(i);
+                    && r.visibility == DEFAULT_VISIBILITY
+                    && r.keyguard == Notification.SHOW_ALL_NOTI_ON_KEYGUARD
+                    && r.halo == DEFAULT_HALO) {
+                mRecords.removeAt(i);
             }
         }
     }
@@ -233,8 +242,11 @@ public class RankingHelper implements RankingConfig {
             if (r.visibility != DEFAULT_VISIBILITY) {
                 out.attribute(null, ATT_VISIBILITY, Integer.toString(r.visibility));
             }
-            if (r.keyguard != DEFAULT_KEYGUARD) {
-                out.attribute(null, ATT_KEYGUARD, Boolean.toString(r.keyguard));
+            if (r.keyguard != Notification.SHOW_ALL_NOTI_ON_KEYGUARD) {
+                out.attribute(null, ATT_KEYGUARD, Integer.toBinaryString(r.keyguard));
+            }
+            if (r.halo != DEFAULT_HALO) {
+                out.attribute(null, ATT_HALO, Boolean.toString(r.halo));
             }
             if (!forBackup) {
                 out.attribute(null, ATT_UID, Integer.toString(r.uid));
@@ -387,17 +399,34 @@ public class RankingHelper implements RankingConfig {
     }
 
     @Override
-    public boolean getPackageKeyguard(String packageName, int uid) {
+    public int getShowNotificationForPackageOnKeyguard(String packageName, int uid) {
         final Record r = mRecords.get(recordKey(packageName, uid));
-        return r != null ? r.keyguard : DEFAULT_KEYGUARD;
+        return r != null ? r.keyguard : Notification.SHOW_ALL_NOTI_ON_KEYGUARD;
     }
 
     @Override
-    public void setPackageKeyguard(String packageName, int uid, boolean keyguard) {
-        if (keyguard == getPackageKeyguard(packageName, uid)) {
+    public void setShowNotificationForPackageOnKeyguard(
+                String packageName, int uid, int keyguard) {
+        if (keyguard == getShowNotificationForPackageOnKeyguard(packageName, uid)) {
             return;
         }
         getOrCreateRecord(packageName, uid).keyguard = keyguard;
+        removeDefaultRecords();
+        updateConfig();
+    }
+
+    @Override
+    public boolean isPackageAllowedForHalo(String packageName, int uid) {
+        final Record r = mRecords.get(recordKey(packageName, uid));
+        return r != null ? r.halo : DEFAULT_HALO;
+    }
+
+    @Override
+    public void setHaloPolicyBlack(String packageName, int uid, boolean halo) {
+        if (halo == isPackageAllowedForHalo(packageName, uid)) {
+            return;
+        }
+        getOrCreateRecord(packageName, uid).halo = halo;
         removeDefaultRecords();
         updateConfig();
     }
@@ -446,9 +475,9 @@ public class RankingHelper implements RankingConfig {
                     pw.print(" visibility=");
                     pw.print(Notification.visibilityToString(r.visibility));
                 }
-                if (r.keyguard != DEFAULT_KEYGUARD) {
-                    pw.print(" keyguard=");
-                    pw.print(r.keyguard);
+                if (r.halo != DEFAULT_HALO) {
+                    pw.print("halo=");
+                    pw.print(r.halo);
                 }
                 pw.println();
             }
@@ -488,7 +517,8 @@ public class RankingHelper implements RankingConfig {
         int priority = DEFAULT_PRIORITY;
         boolean peekable = DEFAULT_PEEKABLE;
         int visibility = DEFAULT_VISIBILITY;
-        boolean keyguard = DEFAULT_KEYGUARD;
+        int keyguard = Notification.SHOW_ALL_NOTI_ON_KEYGUARD;
+        boolean halo = DEFAULT_HALO;
     }
 
 }

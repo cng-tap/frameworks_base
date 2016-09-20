@@ -335,22 +335,27 @@ public class RecoverySystem {
         throws IOException {
         String filename = packageFile.getCanonicalPath();
 
-        FileWriter uncryptFile = new FileWriter(UNCRYPT_FILE);
-        try {
-            uncryptFile.write(filename + "\n");
-        } finally {
-            uncryptFile.close();
-        }
-        // UNCRYPT_FILE needs to be readable by system server on bootup.
-        if (!UNCRYPT_FILE.setReadable(true, false)) {
-            Log.e(TAG, "Error setting readable for " + UNCRYPT_FILE.getCanonicalPath());
-        }
-        Log.w(TAG, "!!! REBOOTING TO INSTALL " + filename + " !!!");
+        final String cryptoStatus = SystemProperties.get("ro.crypto.state", "unsupported");
+        final boolean isEncrypted = "encrypted".equalsIgnoreCase(cryptoStatus);
 
-        // If the package is on the /data partition, write the block map file
-        // into COMMAND_FILE instead.
-        if (filename.startsWith("/data/")) {
-            filename = "@/cache/recovery/block.map";
+        if (isEncrypted) {
+            FileWriter uncryptFile = new FileWriter(UNCRYPT_FILE);
+            try {
+                uncryptFile.write(filename + "\n");
+            } finally {
+                uncryptFile.close();
+            }
+            // UNCRYPT_FILE needs to be readable by system server on bootup.
+            if (!UNCRYPT_FILE.setReadable(true, false)) {
+                Log.e(TAG, "Error setting readable for " + UNCRYPT_FILE.getCanonicalPath());
+            }
+            Log.w(TAG, "!!! REBOOTING TO INSTALL " + filename + " !!!");
+
+            // If the package is on the /data partition, write the block map file
+            // into COMMAND_FILE instead.
+            if (filename.startsWith("/data/")) {
+                filename = "@/cache/recovery/block.map";
+            }
         }
 
         final String filenameArg = "--update_package=" + filename;
@@ -372,18 +377,18 @@ public class RecoverySystem {
      * @throws SecurityException if the current user is not allowed to wipe data.
      */
     public static void rebootWipeUserData(Context context) throws IOException {
-        rebootWipeUserData(context, false, context.getPackageName(), false);
+        rebootWipeUserData(context, false, context.getPackageName(), true);
     }
 
     /** {@hide} */
     public static void rebootWipeUserData(Context context, String reason) throws IOException {
-        rebootWipeUserData(context, false, reason, false);
+        rebootWipeUserData(context, false, reason, true);
     }
 
     /** {@hide} */
     public static void rebootWipeUserData(Context context, boolean shutdown)
             throws IOException {
-        rebootWipeUserData(context, shutdown, context.getPackageName(), false);
+        rebootWipeUserData(context, shutdown, context.getPackageName(), true);
     }
 
    /**

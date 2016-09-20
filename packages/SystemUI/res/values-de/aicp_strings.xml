@@ -56,9 +56,9 @@
     <string name="onthego_transparency">Transparenz</string>
     <string name="onthego_front_camera">Benutze vordere Kamera</string>
     <string name="onthego_service_toggle">Dienst automatisch neustarten</string>
-    <!-- To do: Add QS OnTheGo
+    <!-- To do: Add QS OnTheGo -->
     <string name="quick_settings_onthego_back">Hintere Kamera</string>
-    <string name="quick_settings_onthego_front">Vordere Kamera</string>-->
+    <string name="quick_settings_onthego_front">Vordere Kamera</string>
 
     <!-- Quick settings -->
     <string name="quick_settings_brightness_label">Helligkeit</string>
@@ -98,20 +98,40 @@
     <string name="lte_on">LTE AN </string>
     <string name="lte_off">LTE AUS</string>
 
+    <!-- App sidebar -->
+    <string name="default_folder_text">Ordner</string>
+    <string name="title_activity_sidebar_configuration">Objekte der App-Seitenleiste ändern</string>
+    <string name="action_save">Speichern</string>
+    <string name="toast_items_saved">Inhalt der App-Seitenleiste wurde gespeichert.</string>
+    <string name="content_setup_instructions">Objekte der Seitenleiste hinzufügen, indem ein Symbol auf der rechten Seite lange gedrückt und in die Leiste gezogen wird.\n\nObjekte in Ordner zusammenfassen, indem ein Symbol über ein anderes Symbol in der Leiste bewegt wird.\n\nZum Entfernen von Objekten aus der Leiste, einfach das Symbol aus der \@appbar ziehen.</string>
+    <string name="content_setup_dismiss">Weiter</string>
+    <string name="toast_not_installed">App ist nicht installiert</string>
+
     <!-- NavBar tile -->
-    <string name="quick_settings_navbar_title">Navigationsleiste</string>
-    <string name="quick_settings_navbar_on">Nav.-leiste AN</string>
-    <string name="quick_settings_navbar_off">Nav.-leiste AUS</string>
+    <string name="quick_settings_navigation_bar">Navigationsleiste</string>
+    <string name="quick_settings_smartbar">SmartBar</string>
+    <string name="quick_settings_smartbar_off">SmartBar AUS</string>
+    <string name="quick_settings_fling">Fling</string>
+    <string name="quick_settings_fling_off">Fling AUS</string>
 
     <!-- App Circle Bar tile -->
     <string name="quick_settings_appcirclebar_title">App-Kreisleiste</string>
     <string name="quick_settings_appcirclebar_on">App-Kreisleiste AN</string>
     <string name="quick_settings_appcirclebar_off">App-Kreisleiste AUS</string>
 
+    <!-- App Side Bar tile -->
+    <string name="quick_settings_app_sidebar">App-Seitenleiste</string>
+    <string name="quick_settings_appsidebar_on">App-Seitenleiste AN</string>
+    <string name="quick_settings_appsidebar_off">App-Seitenleiste AUS</string>
+
     <!-- Pie tile -->
     <string name="quick_settings_pie_title">PIE</string>
     <string name="quick_settings_pie_on">PIE AN</string>
     <string name="quick_settings_pie_off">PIE AUS</string>
+
+    <!-- Aicp Extras Tile -->
+    <string name="quick_aicp_extras_label">AICP Extras</string>
+    <string name="quick_aicp_extras_toast">LOL, du hast wirklich geglaubt, dass ein langer Druck dich irgendwo hinbringt!!!</string>
 
     <!-- Dialog title for navigation bar button selection -->
     <string name="navbar_torch">Taschenlampe</string>
@@ -138,24 +158,101 @@
     <string name="accessibility_expand">Vollbildmodus</string>
 
     <!-- Dialog title for navigation bar button selection -->
-    <string name="navbar_app_picker">Applikation wählen</string>
+    <string name="navbar_app_picker">Anwendung wählen</string>
 
     <!-- Content description of the Application picker button for accessibility
     (not shown on the screen). [CHAR LIMIT=NONE] -->
-    <string name="accessibility_app_picker">Applikation wählen</string>
+    <string name="accessibility_app_picker">Anwendung wählen</string>
 
     <!-- Themes QS Tile -->
     <string name="quick_settings_themes">Designs</string>
-    <string name="quick_settings_themes_icon_packs">Symbolpakete</string>
-    <string name="quick_settings_themes_app_theme">App-Design</string>
-    <string name="quick_settings_themes_system_theme">System-Design</string>
+    <string name="quick_settings_themes_icon_packs">Symbolpaket anwenden</string>
+    <string name="quick_settings_themes_app_theme_with_label">Design auf folgende App <xliff:g id="application">%1$s</xliff:g> anwenden</string>
+    <string name="quick_settings_themes_app_theme">Design auf App anwenden</string>
+    <string name="quick_settings_themes_system_theme">Design anwenden</string>
     <string name="quick_settings_themes_default_theme">Standard</string>
-    <string name="quick_settings_themes_match_system">An System-Design anpassen</string>
+    <string name="quick_settings_themes_match_system">Wie System-Design</string>
 
     <!-- Sound QS Tile -->
     <string name="quick_settings_sound_label">Ton</string>
     <string name="quick_settings_sound_ring">Klingeln</string>
     <string name="quick_settings_sound_vibrate">Vibration</string>
     <string name="quick_settings_sound_silent">Lautlos</string>
+
+    <!-- Screenrecord QS Tile -->
+    <string name="quick_settings_screenrecord_label">Bildschirmaufnahme</string>
+    <string name="quick_settings_screenrecord_on">Aufnahme läuft ...</string>
+
+    <!-- Heads up snooze toast -->
+    <string name="heads_up_snooze_message">Pop-Up Nachrichten werden für <xliff:g id="number">%d</xliff:g> Minuten ausgesetzt.</string>
+
+    <!-- Title shown in recents popup for showing app launch in floating mode -->
+    <string name="recent_float_mode_title">Schwebemodus</string>
+
+    <!-- App circle sidebar -->
+    <string name="app_float_maximize_item_title">Maximieren</string>
+    <string name="app_float_item_title">Schwebemodus</string>
+    <string name="app_stop_item_title">App beenden</string>
+
+    <!-- Floating Windows tile -->
+    <string name="quick_settings_floating_windows_on">Schwebemodus AN</string>
+    <string name="quick_settings_floating_windows_off">Schwebemodus AUS</string>
+
+    <!-- Floating Windows tile -->
+    <string name="quick_settings_slim_floats_on">Slim Schwebemodus AN</string>
+    <string name="quick_settings_slim_floats_off">Slim Schwebemodus AUS</string>
+
+    <!-- SystemUI restart tile -->
+    <string name="quick_settings_systemui_restart_label">SystemUI-Neustart</string>
+
+    <!-- Off/On/Toggle -->
+    <string name="off">AUS</string>
+    <string name="on">AN</string>
+    <string name="toggle">Umschalten</string>
+
+    <!-- Dialog Cancel/OK -->
+    <string name="cancel">Abbruch</string>
+    <string name="dlg_ok">Ok</string>
+    <string name="yes">Ja</string>
+    <string name="no">Nein</string>
+
+    <!-- Slim Shortcut Actions -->
+    <string name="shortcut_picker">AICP Verknüpfungen</string>
+    <string name="shortcut_rotation">Display-Drehung</string>
+    <string name="shortcut_reboot">Neustart</string>
+    <string name="shortcut_recovery">Recovery</string>
+    <string name="shortcut_screensleep">Bildschirm ausschalten</string>
+    <string name="shortcut_volume">Lautstärkeregler</string>
+    <string name="shortcut_restart_ui">SystemUI neustarten</string>
+    <string name="shortcut_powermenu">Ein/Aus-Menü</string>
+    <string name="shortcut_flashlight">Taschenlampe</string>
+    <string name="shortcut_clear_notifications">Benachrichtigungen löschen</string>
+    <string name="shortcut_toggle_title">Auszuführende Aktion</string>
+
+    <!-- Slim recents app sidebar queue app toast -->
+    <string name="toast_recents_queue_app">Starte %s nach dem Schließen des Verlaufs</string>
+    <string name="toast_recents_cancel_queued_app">Start der Anwendung abgebrochen</string>
+
+    <!-- Content description of the halo button in the notification panel for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_halo">Erzeuge Benachrichigung Halo.</string>
+
+    <!-- HALO -->
+    <string name="halo_dismiss">Benachrichtigung ausblenden</string>
+    <string name="halo_hide">Verstecken</string>
+    <string name="halo_clear_all">Alle Benachrichtigungen ausblenden</string>
+    <string name="halo_silence">Verstecken &amp; ruhig bis zum Aufwecken</string>
+    <string name="halo_tutorial1">Dies ist HALO</string>
+    <string name="halo_tutorial2">Verschiebe mich: 2-mal tippen &amp; ziehen</string>
+    <string name="halo_tutorial3">Anzeigen durchblättern: Horizontal ziehen</string>
+    <string name="halo_tutorial4">HALO schaltet Pop-Up Nachrichten automtisch AUS.</string>
+    <string name="halo_tutorial5">HALO AUS: 2-mal tippen &amp; auf den roten Kreis ziehen</string>
+    <string name="halo_tutorial6">WICHTIG: Abschalten, wenn eine APK-Datei installiert werden soll</string>
+
+    <!-- Halo Tile -->
+    <string name="quick_settings_halo_on">HALO</string>
+    <string name="quick_settings_halo_off">HALO AUS</string>
+
+    <!-- Advanced Data Tile -->
+    <string name="quick_settings_title_advanced_data_tile">Erweiterte Mobilfunkdaten</string>
 
 </resources>

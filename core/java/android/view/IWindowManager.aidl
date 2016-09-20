@@ -258,6 +258,11 @@ interface IWindowManager
     boolean needsNavigationBar();
 
     /**
+     * Navigation bar window is currently capable of being vertical
+     */
+    boolean navigationBarCanMove();
+
+    /**
      * Lock the device immediately with the specified options (can be null).
      */
     void lockNow(in Bundle options);
@@ -288,10 +293,18 @@ interface IWindowManager
      */
     WindowContentFrameStats getWindowContentFrameStats(IBinder token);
 
+    void setLiveLockscreenEdgeDetector(boolean enable);
+
     /**
      * Get current system ui visibility mode.
      *
      * @hide
      */
     int getSystemUIVisibility();
+
+    /** FLOAT VIEW **/
+    Rect getAppFullscreenViewRect();
+    Rect getAppMinimumViewRect();
+    Rect getFloatViewRect();
+    void notifyFloatActivityTouched(IBinder token, boolean force);
 }

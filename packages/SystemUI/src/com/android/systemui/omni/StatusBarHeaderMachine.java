@@ -40,6 +40,8 @@ import java.util.Iterator;
 import java.util.Calendar;
 
 public class StatusBarHeaderMachine {
+    public static final int STATUSBAR_RESOURCES = 1;
+    public static final int HEADER_RESOURCES = 2;
 
     private static final String TAG = "StatusBarHeaderMachine";
     private static final boolean DEBUG = false;
@@ -48,6 +50,13 @@ public class StatusBarHeaderMachine {
         public Drawable getCurrent(final Calendar time);
 
         public String getName();
+
+        /**
+         * 
+         * @param res Resources to update header drawables from
+         * @param resType statusbar or header overlay
+         */
+        public void updateResources(Resources res, int resType);
     }
 
     public interface IStatusBarHeaderMachineObserver {
@@ -97,25 +106,19 @@ public class StatusBarHeaderMachine {
                             Settings.System
                                     .getUriFor(Settings.System.STATUS_BAR_CUSTOM_HEADER),
                             false, this, UserHandle.USER_ALL);
-            mContext.getContentResolver()
-                    .registerContentObserver(
-                            Settings.System
-                                    .getUriFor(Settings.System.STATUS_BAR_CUSTOM_HEADER_DEFAULT),
-                            false, this, UserHandle.USER_ALL);
         }
 
         @Override
         public void onChange(boolean selfChange) {
-            doUpdateStatusHeaderObservers(true); // simplest way to update poly headers without clobbering API
-            updateEnablement();
+            updateEnablement(false);
         }
     }
 
     private SettingsObserver mSettingsObserver = new SettingsObserver(mHandler);
 
-    public StatusBarHeaderMachine(Context context) {
+    public StatusBarHeaderMachine(Context context, Resources headerRes) {
         mContext = context;
-        addProvider(new DaylightHeaderProvider(context));
+        addProvider(new DaylightHeaderProvider(context, headerRes));
         mSettingsObserver.observe();
     }
 
@@ -130,6 +133,40 @@ public class StatusBarHeaderMachine {
             }
         }
         return null;
+    }
+
+    public Drawable getDefault() {
+        IStatusBarHeaderProvider provider = getCurrentProvider();
+        if (provider != null) {
+            try {
+                return provider.getCurrent(null);
+            } catch (Exception e) {
+                // just in case
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 
+     * @param res Resources to update header drawables from
+     * @param resType statusbar or header overlay
+     */
+    public void updateResources(Resources res, int resType) {
+        if (mProviders.size() > 0) {
+            Iterator<IStatusBarHeaderProvider> nextProvider = mProviders
+                    .iterator();
+            while (nextProvider.hasNext()) {
+                IStatusBarHeaderProvider provider = nextProvider.next();
+                provider.updateResources(res, resType);
+            }
+        }
+        forceUpdate();
+    }
+
+    public void forceUpdate() {
+        doUpdateStatusHeaderObservers(true);
+        updateEnablement(true);
     }
 
     public void addProvider(IStatusBarHeaderProvider provider) {
@@ -198,14 +235,14 @@ public class StatusBarHeaderMachine {
         while (nextObserver.hasNext()) {
             IStatusBarHeaderMachineObserver observer = nextObserver.next();
             try {
-                observer.disableHeader();
+                observer.updateHeader(getDefault(), true);
             } catch (Exception e) {
                 // just in case
             }
         }
     }
 
-    public void updateEnablement() {
+    public void updateEnablement(boolean force) {
         final boolean customHeader = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_CUSTOM_HEADER, 0,
                 UserHandle.USER_CURRENT) == 1;
@@ -223,8 +260,10 @@ public class StatusBarHeaderMachine {
                 mAttached = true;
             }
         } else {
-            if (mAttached) {
-                mContext.unregisterReceiver(mBroadcastReceiver);
+            if (mAttached || force) {
+                if (!force) {
+                    mContext.unregisterReceiver(mBroadcastReceiver);
+                }
                 stopHourlyAlarm();
                 doDisableStatusHeaderObservers();
                 mAttached = false;

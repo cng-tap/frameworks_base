@@ -76,7 +76,7 @@
   <string name="adb_active_generic_notification_message">Érintse meg a hibakeresés letiltásához.</string>
   <!-- ADB custom tile -->
   <string name="adb_active_custom_tile">ADB - <xliff:g id="adb_type" example="USB">%1$s</xliff:g></string>
-  <string name="adb_active_custom_tile_both">USB &amp; hálózat</string>
+  <string name="adb_active_custom_tile_both">USB és hálózat</string>
   <string name="adb_active_custom_tile_usb">USB</string>
   <string name="adb_active_custom_tile_net">Hálózat</string>
   <!-- Title of an application permission, listed so the user can choose whether they want the application to do this. -->
@@ -168,18 +168,6 @@
   <string name="app_ops_su">rendszergazdai jogosultság szerzése</string>
   <!-- Notify user that they are in Lock-to-app (for devices without navbar) -->
   <string name="lock_to_app_toast_no_navbar">Képernyő rögzítésének feloldásához érintse meg és tartsa nyomva a Vissza gombot.</string>
-  <!-- LiveDisplay strings -->
-  <string name="live_display_auto">Automatikus</string>
-  <string name="live_display_auto_summary">Automatikusan beállítja a képernyő színhőmérsékletét napnyugta és napkelte után</string>
-  <string name="live_display_off">Ki</string>
-  <string name="live_display_off_summary">Az összes beállítás kikapcsolása</string>
-  <string name="live_display_day">Nappal</string>
-  <string name="live_display_day_summary">Csak a nappali beállítások használata</string>
-  <string name="live_display_night">Éjszaka</string>
-  <string name="live_display_night_summary">Csak az éjszakai béállítások használata</string>
-  <string name="live_display_outdoor">Kültéri (erős napfény)</string>
-  <string name="live_display_outdoor_summary">Csak a kültéri beállítások használata</string>
-  <string name="live_display_hint">A LiveDisplay segíthet a szemek terhelésének csökkentésében és a jobb éjszakai alvásban. Kattintson ide, hogy kipróbálja!</string>
   <!-- Template for showing cellular network operator name while LTE calling is enabled -->
   <string name="tethered_notification_no_device_message">Nincs csatlakoztatott készülék</string>
   <string name="tethered_notification_one_device_message"><xliff:g id="count">%1$s</xliff:g> csatlakoztatott eszköz</string>

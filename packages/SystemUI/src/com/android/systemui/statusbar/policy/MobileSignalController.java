@@ -20,6 +20,7 @@ import android.content.Intent;
 import android.net.NetworkCapabilities;
 import android.os.Looper;
 import android.os.SystemProperties;
+import android.provider.Settings;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
@@ -194,7 +195,8 @@ public class MobileSignalController extends SignalController<
         }
         mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_HSPAP, hGroup);
 
-        if (mConfig.show4gForLte) {
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SHOW_FOURG, 0) == 1) {
             mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_LTE, TelephonyIcons.FOUR_G);
             mNetworkToIconLookup.put(TelephonyManager.NETWORK_TYPE_LTE_CA,
                 TelephonyIcons.FOUR_G_PLUS);
@@ -279,13 +281,15 @@ public class MobileSignalController extends SignalController<
     }
 
     private boolean isRoaming() {
-        if (isCdma()) {
+        if (mServiceState == null) {
+            return false;
+        } else if (isCdma()) {
             final int iconMode = mServiceState.getCdmaEriIconMode();
             return mServiceState.getCdmaEriIconIndex() != EriInfo.ROAMING_INDICATOR_OFF
                     && (iconMode == EriInfo.ROAMING_ICON_MODE_NORMAL
                         || iconMode == EriInfo.ROAMING_ICON_MODE_FLASH);
         } else {
-            return mServiceState != null && mServiceState.getRoaming();
+            return mServiceState.getRoaming();
         }
     }
 
@@ -395,7 +399,8 @@ public class MobileSignalController extends SignalController<
             mCurrentState.iconGroup = mDefaultIcons;
         }
         mCurrentState.dataConnected = mCurrentState.connected
-                && mDataState == TelephonyManager.DATA_CONNECTED;
+                && mDataState == TelephonyManager.DATA_CONNECTED
+                && mCurrentState.dataSim;
 
         mCurrentState.showSeparateRoaming = false;
         if (isCarrierNetworkChangeActive()) {

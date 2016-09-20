@@ -22,11 +22,18 @@ import android.app.ActivityManagerNative;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.ThemeConfig;
+import android.database.ContentObserver;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.RemoteException;
+import android.os.UserHandle;
+import android.provider.Settings;
+import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -38,7 +45,10 @@ import com.android.systemui.qs.QSDetailItemsList;
 import com.android.systemui.qs.QSTile;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import cyanogenmod.app.StatusBarPanelCustomTile;
 import cyanogenmod.providers.ThemesContract;
@@ -51,13 +61,23 @@ import org.cyanogenmod.internal.logging.CMMetricsLogger;
  * Quick settings tile: Themes mode
  **/
 public class ThemesTile extends QSTile<QSTile.BooleanState> implements ThemeManager.ThemeChangeListener {
+    private static final String TAG = ThemesTile.class.getSimpleName();
 
     private enum Mode {ALL_THEMES, ICON_PACK, APP_THEME}
+
+    private static Set<String> sDefaultComponentsToApply = new HashSet<>();
+    static {
+        sDefaultComponentsToApply.add(ThemesContract.ThemesColumns.MODIFIES_OVERLAYS);
+        sDefaultComponentsToApply.add(ThemesContract.ThemesColumns.MODIFIES_STATUS_BAR);
+        sDefaultComponentsToApply.add(ThemesContract.ThemesColumns.MODIFIES_NAVIGATION_BAR);
+        sDefaultComponentsToApply.add(ThemesContract.ThemesColumns.MODIFIES_STATUSBAR_HEADERS);
+    }
 
     private static final String CATEGORY_THEME_CHOOSER = "cyanogenmod.intent.category.APP_THEMES";
     private final ThemesDetailAdapter mDetailAdapter;
     private ThemeManager mService;
     private Mode mode;
+    private String mTopAppLabel;
 
     public ThemesTile(Host host) {
         super(host);
@@ -101,6 +121,7 @@ public class ThemesTile extends QSTile<QSTile.BooleanState> implements ThemeMana
             mode = Mode.ICON_PACK;
         } else {
             mode = Mode.APP_THEME;
+            mTopAppLabel = getTopAppLabel(getTopActivity());
         }
 
         showDetail(true);
@@ -131,7 +152,7 @@ public class ThemesTile extends QSTile<QSTile.BooleanState> implements ThemeMana
         }
     }
 
-    private final class ThemesDetailAdapter implements DetailAdapter,
+    private final class ThemesDetailAdapter implements CustomTitleDetailAdapter,
             AdapterView.OnItemClickListener {
 
         private QSDetailItemsList mItemsList;
@@ -146,9 +167,21 @@ public class ThemesTile extends QSTile<QSTile.BooleanState> implements ThemeMana
                 case ICON_PACK:
                     return R.string.quick_settings_themes_icon_packs;
                 case APP_THEME:
-                    return R.string.quick_settings_themes_app_theme;
+                    return USES_CUSTOM_DETAIL_ADAPTER_TITLE;
                 default:
-                    return -1;
+                    return R.string.quick_settings_themes;
+            }
+        }
+
+        @Override
+        public String getCustomTitle() {
+            switch (mode) {
+                case APP_THEME:
+                    final String topAppLabel = mTopAppLabel;
+                    return mContext.getString(
+                            R.string.quick_settings_themes_app_theme_with_label, topAppLabel);
+                default:
+                    return mContext.getString(R.string.quick_settings_themes_app_theme);
             }
         }
 
@@ -178,10 +211,6 @@ public class ThemesTile extends QSTile<QSTile.BooleanState> implements ThemeMana
         private void updateItems() {
 
             if (mItemsList == null) return;
-
-            if (isTopActivityLauncher()) {
-                // Log.d("ThemesTile", "This is launcher");
-            }
 
             items.clear();
 
@@ -229,14 +258,19 @@ public class ThemesTile extends QSTile<QSTile.BooleanState> implements ThemeMana
 
             Item selectedItem = (Item) parent.getItemAtPosition(position);
 
+            if (selectedItem.icon == R.drawable.ic_qs_themes_on){
+                return;
+            }
+
             String pkg = (String) selectedItem.tag;
 
-            ThemeChangeRequest.Builder builder = new ThemeChangeRequest.Builder();
+            final ThemeChangeRequest.Builder builder = new ThemeChangeRequest.Builder();
 
             if (mode == Mode.ALL_THEMES) {
-                builder.setStatusBar(pkg);
-                builder.setOverlay(pkg);
-                builder.setNavBar(pkg);
+                final Set<String> componentsToApply = updateSelectedComponents();
+                for (String component : componentsToApply) {
+                    builder.setComponent(component, pkg);
+                }
             } else if (mode == Mode.ICON_PACK) {
                 builder.setIcons(pkg);
             } else if (mode == Mode.APP_THEME) {
@@ -245,8 +279,18 @@ public class ThemesTile extends QSTile<QSTile.BooleanState> implements ThemeMana
                 builder.setAppOverlay(getTopApp(), pkg);
             }
 
-            mService.requestThemeChange(builder.build(), false);
+            // let's collapse the panel when we are going to recreate the statusbar
+            if (mode == Mode.ALL_THEMES || mode == Mode.ICON_PACK) {
+                mHost.collapsePanels();
+            }
 
+            // delay this slightly to allow for panel collapse or tap ripple without jank
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mService.requestThemeChange(builder.build(), false);
+                }
+            }, 500);
         }
 
         private String getCurrentIconPack() {
@@ -423,9 +467,20 @@ public class ThemesTile extends QSTile<QSTile.BooleanState> implements ThemeMana
             return itemList;
 
         }
-
     }
 
+    private Set<String> updateSelectedComponents() {
+        Set<String> componentsToApply = new HashSet<>();
+        String components = Settings.Secure.getStringForUser(mContext.getContentResolver(),
+                Settings.Secure.THEMES_TILE_COMPONENTS,
+                UserHandle.USER_CURRENT);
+        if (TextUtils.isEmpty(components)) {
+            componentsToApply.addAll(sDefaultComponentsToApply);
+        } else {
+            componentsToApply.addAll(Arrays.asList(components.split("\\|")));
+        }
+        return componentsToApply;
+    }
 
     private boolean isTopActivityLauncher() {
         return isActivityLauncher(getTopActivity());
@@ -440,6 +495,18 @@ public class ThemesTile extends QSTile<QSTile.BooleanState> implements ThemeMana
 
     private String getTopApp() {
         return getTopActivity().getPackageName();
+    }
+
+    private String getTopAppLabel(ComponentName componentName) {
+        String label = null;
+        PackageManager pm = mContext.getPackageManager();
+        try {
+            ApplicationInfo info = pm.getApplicationInfo(componentName.getPackageName(), 0);
+            label = info.loadLabel(pm).toString();
+        } catch (Exception e) {
+            label = mContext.getString(R.string.quick_settings_themes_app_theme);
+        }
+        return label;
     }
 
     private boolean isActivityLauncher(ComponentName componentName) {

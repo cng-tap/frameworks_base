@@ -38,6 +38,7 @@ import android.widget.RemoteViews;
 import com.android.systemui.R;
 import com.android.systemui.qs.QSTile;
 import com.android.systemui.qs.tiles.AdbOverNetworkTile;
+import com.android.systemui.qs.tiles.AicpExtrasTile;
 import com.android.systemui.qs.tiles.AirplaneModeTile;
 import com.android.systemui.qs.tiles.AmbientDisplayTile;
 import com.android.systemui.qs.tiles.AppPickerTile;
@@ -54,12 +55,14 @@ import com.android.systemui.qs.tiles.DndTile;
 import com.android.systemui.qs.tiles.EditTile;
 import com.android.systemui.qs.tiles.ExpandedDesktopTile;
 import com.android.systemui.qs.tiles.FlashlightTile;
+import com.android.systemui.qs.tiles.FloatingWindowsTile;
+import com.android.systemui.qs.tiles.HaloTile;
 import com.android.systemui.qs.tiles.HeadsUpTile;
 import com.android.systemui.qs.tiles.HotspotTile;
 import com.android.systemui.qs.tiles.IntentTile;
-import com.android.systemui.qs.tiles.LiveDisplayTile;
 import com.android.systemui.qs.tiles.LocationTile;
 import com.android.systemui.qs.tiles.AppCircleBarTile;
+import com.android.systemui.qs.tiles.AppsidebarTile;
 import com.android.systemui.qs.tiles.NavBarTile;
 import com.android.systemui.qs.tiles.PieTile;
 import com.android.systemui.qs.tiles.LockscreenToggleTile;
@@ -76,6 +79,7 @@ import com.android.systemui.qs.tiles.ScreenshotTile;
 import com.android.systemui.qs.tiles.ScreenTimeoutTile;
 import com.android.systemui.qs.tiles.SoundTile;
 import com.android.systemui.qs.tiles.SyncTile;
+import com.android.systemui.qs.tiles.SystemUIRestartTile;
 import com.android.systemui.qs.tiles.ThemesTile;
 import com.android.systemui.qs.tiles.UsbTetherTile;
 import com.android.systemui.qs.tiles.VolumeTile;
@@ -327,7 +331,7 @@ public class QSTileHost implements QSTile.Host, Tunable {
     public SecurityController getSecurityController() {
         return mSecurity;
     }
-    
+
     @Override
     public void onTuningChanged(String key, String newValue) {
         if (!CMSettings.Secure.QS_TILES.equals(key)) {
@@ -350,10 +354,12 @@ public class QSTileHost implements QSTile.Host, Tunable {
                 if (DEBUG) Log.d(TAG, "Creating tile: " + tileSpec);
                 try {
                     if (mCustomTileData.get(tileSpec) != null) {
-                        newTiles.put(tileSpec, new CustomQSTile(this,
-                                mCustomTileData.get(tileSpec).sbc));
+                        final CustomQSTile value = new CustomQSTile(this,
+                                mCustomTileData.get(tileSpec).sbc);
+                        newTiles.put(tileSpec, value);
                     } else {
-                        newTiles.put(tileSpec, createTile(tileSpec));
+                        final QSTile<?> tile = createTile(tileSpec);
+                        newTiles.put(tileSpec, tile);
                     }
                 } catch (Throwable t) {
                     Log.w(TAG, "Error creating tile for spec: " + tileSpec, t);
@@ -400,7 +406,6 @@ public class QSTileHost implements QSTile.Host, Tunable {
         else if (tileSpec.equals("performance")) return new PerfProfileTile(this);
         else if (tileSpec.equals("lockscreen")) return  new LockscreenToggleTile(this);
         else if (tileSpec.equals("ambient_display")) return new AmbientDisplayTile(this);
-        else if (tileSpec.equals("live_display")) return new LiveDisplayTile(this);
         else if (tileSpec.equals("brightness")) return new BrightnessTile(this);
         else if (tileSpec.equals("screen_off")) return new ScreenOffTile(this);
         else if (tileSpec.equals("screenshot")) return new ScreenshotTile(this);
@@ -410,6 +415,7 @@ public class QSTileHost implements QSTile.Host, Tunable {
         else if (tileSpec.equals("lte")) return new LteTile(this);
         else if (tileSpec.equals("navbar")) return new NavBarTile(this);
         else if (tileSpec.equals("appcirclebar")) return new AppCircleBarTile(this);
+        else if (tileSpec.equals("appsidebar")) return new AppsidebarTile(this);
         else if (tileSpec.equals("pie")) return new PieTile(this);
         else if (tileSpec.equals("heads_up")) return new HeadsUpTile(this);
         else if (tileSpec.equals("battery_saver")) return new BatterySaverTile(this);
@@ -418,8 +424,17 @@ public class QSTileHost implements QSTile.Host, Tunable {
         else if (tileSpec.equals("caffeine")) return new CaffeineTile(this);
         else if (tileSpec.equals("sound")) return new SoundTile(this);
         else if (tileSpec.equals("screenrecord")) return new ScreenrecordTile(this);
+        else if (tileSpec.equals("float_mode")) return new FloatingWindowsTile(this);
+        else if (tileSpec.equals("aicp_extras")) return new AicpExtrasTile(this);
+        else if (tileSpec.equals("restart_systemui")) return new SystemUIRestartTile(this);
+        else if (tileSpec.equals("halo")) return new HaloTile(this);
         else if (tileSpec.startsWith(IntentTile.PREFIX)) return IntentTile.create(this,tileSpec);
-        else throw new IllegalArgumentException("Bad tile spec: " + tileSpec);
+        else if (TextUtils.split(tileSpec, "\\|").length == 3) {
+            /** restores placeholder for
+             * {@link cyanogenmod.app.StatusBarPanelCustomTile#persistableKey()} **/
+            return new CustomQSTile(this, tileSpec);
+        } else
+            throw new IllegalArgumentException("Bad tile spec: " + tileSpec);
     }
 
     protected List<String> loadTileSpecs(String tileList) {
@@ -446,11 +461,10 @@ public class QSTileHost implements QSTile.Host, Tunable {
                 tiles.add(tile);
             }
         }
-        // ensure edit tile is present
-        if (tiles.size() < TILES_PER_PAGE && !tiles.contains("edit")) {
+        // ensure edit tile is present, default placement should be handled in the default
+        // tile list.
+        if (!tiles.contains("edit")) {
             tiles.add("edit");
-        } else if (tiles.size() > TILES_PER_PAGE && !tiles.contains("edit")) {
-            tiles.add((TILES_PER_PAGE - 1), "edit");
         }
         return tiles;
     }
@@ -508,7 +522,6 @@ public class QSTileHost implements QSTile.Host, Tunable {
         else if (spec.equals("performance")) return R.string.qs_tile_performance;
         else if (spec.equals("lockscreen")) return R.string.quick_settings_lockscreen_label;
         else if (spec.equals("ambient_display")) return R.string.quick_settings_ambient_display_label;
-        else if (spec.equals("live_display")) return R.string.live_display_title;
         else if (spec.equals("brightness")) return R.string.quick_settings_brightness_label;
         else if (spec.equals("screen_off")) return R.string.quick_settings_screen_off_label;
         else if (spec.equals("screenshot")) return R.string.quick_settings_screenshot_label;
@@ -518,6 +531,7 @@ public class QSTileHost implements QSTile.Host, Tunable {
         else if (spec.equals("lte")) return R.string.qs_lte_label;
         else if (spec.equals("navbar")) return R.string.quick_settings_navigation_bar;
         else if (spec.equals("appcirclebar")) return R.string.quick_settings_appcirclebar_title;
+        else if (spec.equals("appsidebar")) return R.string.quick_settings_app_sidebar;
         else if (spec.equals("pie")) return R.string.quick_settings_pie_title;
         else if (spec.equals("heads_up")) return R.string.quick_settings_heads_up_label;
         else if (spec.equals("battery_saver")) return R.string.quick_settings_battery_saver_label;
@@ -526,6 +540,10 @@ public class QSTileHost implements QSTile.Host, Tunable {
         else if (spec.equals("caffeine")) return R.string.quick_settings_caffeine_label;
         else if (spec.equals("sound")) return R.string.quick_settings_sound_label;
         else if (spec.equals("screenrecord")) return R.string.quick_settings_screenrecord_label;
+        else if (spec.equals("float_mode")) return R.string.recent_float_mode_title;
+        else if (spec.equals("aicp_extras")) return R.string.quick_aicp_extras_label;
+        else if (spec.equals("restart_systemui")) return R.string.quick_settings_systemui_restart_label;
+        else if (spec.equals("halo")) return R.string.quick_settings_halo_on;
         return 0;
     }
 
@@ -553,7 +571,6 @@ public class QSTileHost implements QSTile.Host, Tunable {
         else if (spec.equals("performance")) return R.drawable.ic_qs_perf_profile;
         else if (spec.equals("lockscreen")) return R.drawable.ic_qs_lock_screen_on;
         else if (spec.equals("ambient_display")) return R.drawable.ic_qs_ambientdisplay_on;
-        else if (spec.equals("live_display")) return R.drawable.ic_livedisplay_auto;
         else if (spec.equals("music")) return R.drawable.ic_qs_media_play;
         else if (spec.equals("brightness")) return R.drawable.ic_qs_brightness_auto_on;
         else if (spec.equals("screen_off")) return R.drawable.ic_qs_power;
@@ -563,7 +580,8 @@ public class QSTileHost implements QSTile.Host, Tunable {
         else if (spec.equals("lte")) return R.drawable.ic_qs_lte_on;
         else if (spec.equals("navbar")) return R.drawable.ic_qs_smartbar;
         else if (spec.equals("appcirclebar")) return R.drawable.ic_qs_appcirclebar_on;
-        else if (spec.equals("pie")) return R.drawable.ic_qs_pie_on;	
+        else if (spec.equals("appsidebar")) return R.drawable.ic_qs_appsidebar_on;
+        else if (spec.equals("pie")) return R.drawable.ic_qs_pie_on;
         else if (spec.equals("heads_up")) return R.drawable.ic_qs_heads_up_on;
         else if (spec.equals("battery_saver")) return R.drawable.ic_qs_battery_saver_on;
         else if (spec.equals("themes")) return R.drawable.ic_qs_themes_on;
@@ -571,13 +589,17 @@ public class QSTileHost implements QSTile.Host, Tunable {
         else if (spec.equals("caffeine")) return R.drawable.ic_qs_caffeine_on;
         else if (spec.equals("sound")) return R.drawable.ic_qs_ringer_audible;
         else if (spec.equals("screenrecord")) return R.drawable.ic_qs_screenrecord;
+        else if (spec.equals("float_mode")) return R.drawable.ic_qs_floating_on;
+        else if (spec.equals("aicp_extras")) return R.drawable.ic_qs_aicp_extras;
+        else if (spec.equals("restart_systemui")) return R.drawable.ic_qs_systemui_restart;
+        else if (spec.equals("halo")) return R.drawable.ic_notify_halo_normal;
         return 0;
     }
 
     void updateCustomTile(StatusBarPanelCustomTile sbc) {
         synchronized (mTiles) {
-            if (mTiles.containsKey(sbc.getKey())) {
-                QSTile<?> tile = mTiles.get(sbc.getKey());
+            if (mTiles.containsKey(sbc.persistableKey())) {
+                QSTile<?> tile = mTiles.get(sbc.persistableKey());
                 if (tile instanceof CustomQSTile) {
                     CustomQSTile qsTile = (CustomQSTile) tile;
                     qsTile.update(sbc);
@@ -589,8 +611,8 @@ public class QSTileHost implements QSTile.Host, Tunable {
     void addCustomTile(StatusBarPanelCustomTile sbc) {
         synchronized (mTiles) {
             mCustomTileData.add(new CustomTileData.Entry(sbc));
-            mTileSpecs.add(sbc.getKey());
-            mTiles.put(sbc.getKey(), new CustomQSTile(this, sbc));
+            mTileSpecs.add(sbc.persistableKey());
+            mTiles.put(sbc.persistableKey(), new CustomQSTile(this, sbc));
             if (mCallback != null) {
                 mCallback.onTilesChanged();
             }

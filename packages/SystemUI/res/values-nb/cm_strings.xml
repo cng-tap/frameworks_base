@@ -89,6 +89,7 @@
   <string name="quick_settings_heads_up_label">Flytende notifikasjoner</string>
   <string name="quick_settings_battery_saver_label">Batterisparing</string>
   <!-- quick settings battery saver label to show when device is charging and tile is disabled -->
+  <string name="quick_settings_battery_saver_label_charging">Batterisparing (lading)</string>
   <string name="quick_settings_caffeine_label">Koffein</string>
   <!-- Content description of the sync tile in quick settings when off (not shown on the screen). [CHAR LIMIT=NONE] -->
   <string name="accessibility_quick_settings_sync_off">Synkronisering av.</string>
@@ -141,13 +142,13 @@
   <!-- Announcement made when lock screen changes to on (not shown on the screen). [CHAR LIMIT=NONE] -->
   <string name="accessibility_quick_settings_lock_screen_changed_on">Låseskjerm slått på.</string>
   <!-- Content description of the ambient display tile in quick settings when off (not shown on the screen). [CHAR LIMIT=NONE] -->
-  <string name="accessibility_quick_settings_ambient_display_off">Ambient visning av.</string>
+  <string name="accessibility_quick_settings_ambient_display_off">Ambient skjerm av.</string>
   <!-- Content description of the ambient display tile in quick settings when on (not shown on the screen). [CHAR LIMIT=NONE] -->
-  <string name="accessibility_quick_settings_ambient_display_on">Ambient visning på.</string>
+  <string name="accessibility_quick_settings_ambient_display_on">Ambient skjerm på.</string>
   <!-- Announcement made when ambient display changes to off (not shown on the screen). [CHAR LIMIT=NONE] -->
-  <string name="accessibility_quick_settings_ambient_display_changed_off">Ambient visning er skrudd av.</string>
+  <string name="accessibility_quick_settings_ambient_display_changed_off">Ambient skjerm er skrudd av.</string>
   <!-- Announcement made when ambient display changes to on (not shown on the screen). [CHAR LIMIT=NONE] -->
-  <string name="accessibility_quick_settings_ambient_display_changed_on">Ambient visning er skrudd på.</string>
+  <string name="accessibility_quick_settings_ambient_display_changed_on">Ambient skjerm er skrudd på.</string>
   <!-- Content description of the heads up tile in quick settings when off (not shown on the screen). [CHAR LIMIT=NONE] -->
   <string name="accessibility_quick_settings_heads_up_off">Heads up notifikasjoner er av.</string>
   <!-- Content description of the heads up tile in quick settings when on (not shown on the screen). [CHAR LIMIT=NONE] -->
@@ -173,17 +174,7 @@
   <string name="dynamic_qs_tile_next_alarm_label">Neste alarm</string>
   <string name="dynamic_qs_tile_ime_selector_label">IME-velger</string>
   <string name="dynamic_qs_tile_su_label">Root-tilgang</string>
-  <!-- LiveDisplay strings -->
-  <string name="accessibility_quick_settings_live_display_off">Direkteskjerm av.</string>
-  <string name="accessibility_quick_settings_live_display_auto">Direkteskjerm: automatisk.</string>
-  <string name="accessibility_quick_settings_live_display_day">Direkteskjerm: dagsmodus.</string>
-  <string name="accessibility_quick_settings_live_display_night">Direkteskjerm: nattmodus.</string>
-  <string name="accessibility_quick_settings_live_display_outdoor">Direkteskjerm: utendørs.</string>
-  <string name="accessibility_quick_settings_live_display_changed_off">Direkteskjerm deaktivert.</string>
-  <string name="accessibility_quick_settings_live_display_changed_auto">Direkteskjerm endret til automatisk.</string>
-  <string name="accessibility_quick_settings_live_display_changed_day">Direkteskjerm endret til dagsmodus.</string>
-  <string name="accessibility_quick_settings_live_display_changed_night">Direkteskjerm endret til nattmodus.</string>
-  <string name="accessibility_quick_settings_live_display_changed_outdoor">Direkteskjerm endret til utendørs.</string>
+  <string name="dynamic_qs_tile_themes_label">Temaer</string>
   <string name="quick_settings_title_advanced_location">Tre nivåer stedsangivelse</string>
   <!-- Content description of the location tile in quick settings when on, battery saving mode (not shown on the screen). [CHAR LIMIT=NONE] -->
   <string name="accessibility_quick_settings_location_battery_saving">Lokasjonsmodus: strømsparemodus.</string>
@@ -205,7 +196,7 @@
   <string name="accessibility_quick_settings_location_changed_gps_only">Lokasjonsmodus endret til bare sensorer.</string>
   <!-- Announcement made when the location tile changes to high accuracy (not shown on the screen). [CHAR LIMIT=NONE] -->
   <string name="accessibility_quick_settings_location_changed_high_accuracy">Lokasjonsmodus endret til høy nøyaktighet.</string>
-  <string name="quick_settings_tiles_category_system">Systemet fliser</string>
+  <string name="quick_settings_tiles_category_system">Systemfliser</string>
   <!-- detail header when adding a tile -->
   <string name="quick_settings_tiles_add_tiles">Legge til en flis</string>
   <!-- Hotspot dialog message -->
@@ -224,4 +215,12 @@
   <string name="accessibility_dock_battery_level">Dokkingstasjonens batteri <xliff:g id="number"> %d</xliff:g> prosent.</string>
   <!-- Play queue -->
   <string name="play_queue_extention">Vis avspillingskø</string>
+  <!-- Path data for portrait battery -->
+  <!-- Path data for landscape battery -->
+  <!-- Path data for circle battery -->
+  <!-- Weather string format in keyguard -->
+  <string name="keyguard_status_view_weather_format"><xliff:g id="temp">%1$s</xliff:g> <xliff:g id="condition">%2$s</xliff:g></string>
+  <string name="expand_hint">Sveip ned for å utvide</string>
+  <string name="swipe_left_hint">Sveip til høyre for å <xliff:g id="app_name">%1$s</xliff:g></string>
+  <string name="swipe_right_hint">Sveip til høyre for å se varsler</string>
 </resources>

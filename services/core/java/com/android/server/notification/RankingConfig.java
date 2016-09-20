@@ -28,7 +28,11 @@ public interface RankingConfig {
 
     void setPackageVisibilityOverride(String packageName, int uid, int visibility);
 
-    boolean getPackageKeyguard(String packageName, int uid);
+    void setShowNotificationForPackageOnKeyguard(String packageName, int uid, int status);
 
-    void setPackageKeyguard(String packageName, int uid, boolean keyguard);
+    int getShowNotificationForPackageOnKeyguard(String packageName, int uid);
+
+    boolean isPackageAllowedForHalo(String packageName, int uid);
+
+    void setHaloPolicyBlack(String packagename, int uid, boolean floating);
 }

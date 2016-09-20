@@ -422,6 +422,13 @@ public class CarrierConfigManager {
     public static final String KEY_HIDE_IMS_APN_BOOL = "hide_ims_apn_bool";
 
     /**
+     * Determine whether HD icon should displayed when audio codec is EVS.
+     * @hide
+     */
+    public static final String KEY_IMS_SUPPORT_EVS_HD_ICON_BOOL =
+            "carrier_ims_support_evs_hd_icon_bool";
+
+    /**
      * Determine whether preferred network type can be shown.
      * @hide
      */
@@ -508,6 +515,13 @@ public class CarrierConfigManager {
     public static final String KEY_ALLOW_NON_EMERGENCY_CALLS_IN_ECM_BOOL =
             "allow_non_emergency_calls_in_ecm_bool";
 
+    /**
+     * Flag indicating whether MMS data connection is allowed when mobile data is off.
+     * Default value is {@code false}, meaning that MMS is not available when mobile data is off.
+     * @hide
+     */
+    public static final String KEY_ALLOW_MMS_WHEN_MOBILE_DATA_OFF_BOOL = "allow_mms_when_mobile_data_off";
+
     /** The default value for every variable. */
     private final static PersistableBundle sDefaults;
 
@@ -543,7 +557,7 @@ public class CarrierConfigManager {
         sDefaults.putBoolean(KEY_SHOW_CDMA_CHOICES_BOOL, false);
         sDefaults.putBoolean(KEY_SHOW_ONSCREEN_DIAL_BUTTON_BOOL, true);
         sDefaults.putBoolean(KEY_SIM_NETWORK_UNLOCK_ALLOW_DISMISS_BOOL, true);
-        sDefaults.putBoolean(KEY_SUPPORT_PAUSE_IMS_VIDEO_CALLS_BOOL, true);
+        sDefaults.putBoolean(KEY_SUPPORT_PAUSE_IMS_VIDEO_CALLS_BOOL, false);
         sDefaults.putBoolean(KEY_SUPPORT_SWAP_AFTER_MERGE_BOOL, true);
         sDefaults.putBoolean(KEY_USE_HFA_FOR_PROVISIONING_BOOL, false);
         sDefaults.putBoolean(KEY_USE_OTASP_FOR_PROVISIONING_BOOL, false);
@@ -576,6 +590,7 @@ public class CarrierConfigManager {
         sDefaults.putBoolean(KEY_SUPPORT_CONFERENCE_CALL_BOOL, true);
         sDefaults.putBoolean(KEY_EDITABLE_ENHANCED_4G_LTE_BOOL, true);
         sDefaults.putBoolean(KEY_HIDE_IMS_APN_BOOL, false);
+        sDefaults.putBoolean(KEY_IMS_SUPPORT_EVS_HD_ICON_BOOL, false);
         sDefaults.putBoolean(KEY_HIDE_PREFERRED_NETWORK_TYPE_BOOL, false);
         sDefaults.putBoolean(KEY_EDITABLE_WFC_MODE_BOOL, true);
         sDefaults.putInt(KEY_CDMA_DTMF_TONE_DELAY_INT, 100);
@@ -613,6 +628,7 @@ public class CarrierConfigManager {
         sDefaults.putString(KEY_MMS_UA_PROF_URL_STRING, "");
         sDefaults.putString(KEY_MMS_USER_AGENT_STRING, "");
         sDefaults.putBoolean(KEY_ALLOW_NON_EMERGENCY_CALLS_IN_ECM_BOOL, true);
+        sDefaults.putBoolean(KEY_ALLOW_MMS_WHEN_MOBILE_DATA_OFF_BOOL, false);
     }
 
     /**

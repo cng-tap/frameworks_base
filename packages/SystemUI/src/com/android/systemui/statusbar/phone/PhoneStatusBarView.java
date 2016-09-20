@@ -161,9 +161,13 @@ public class PhoneStatusBarView extends PanelBar {
 
     public void clearCarrierView() {
         mCarrierLabel = (TextView) findViewById(R.id.left_statusbar_carrier_text);
-        mCarrierLabel.setVisibility(View.GONE);
+        if (!mCarrierLabel.getText().equals("")) {
+            mCarrierLabel.setVisibility(View.GONE);
+        }
         mCarrierLabel = (TextView) findViewById(R.id.statusbar_carrier_text);
-        mCarrierLabel.setVisibility(View.GONE);
+        if (!mCarrierLabel.getText().equals("")) {
+            mCarrierLabel.setVisibility(View.GONE);
+        }
     }
 
     public void getFontStyle(int font) {
@@ -311,6 +315,7 @@ public class PhoneStatusBarView extends PanelBar {
     @Override
     public void onPanelPeeked() {
         super.onPanelPeeked();
+        removePendingHideExpandedRunnables();
         mBar.makeExpandedVisible(false);
     }
 

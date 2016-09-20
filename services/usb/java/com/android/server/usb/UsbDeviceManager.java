@@ -379,6 +379,9 @@ public class UsbDeviceManager {
                 mContentResolver.registerContentObserver(
                         CMSettings.Secure.getUriFor(CMSettings.Secure.ADB_NOTIFY),
                         false, adbNotificationObserver);
+                mContentResolver.registerContentObserver(
+                        Settings.Global.getUriFor(Settings.Global.ADB_ALWAYS_NOTIFY),
+                        false, adbNotificationObserver);
 
                 // Watch for USB configuration changes
                 mUEventObserver.startObserving(USB_STATE_MATCH);
@@ -580,7 +583,13 @@ public class UsbDeviceManager {
 
             if (mConfigured && enteringAccessoryMode) {
                 // successfully entered accessory mode
-
+                if (mCurrentAccessory != null) {
+                    Slog.w(TAG, "USB accessory re-attached, detach was not announced!");
+                    if (mBootCompleted) {
+                        getCurrentSettings().accessoryDetached(mCurrentAccessory);
+                    }
+                    mCurrentAccessory = null;
+                }
                 if (mAccessoryStrings != null) {
                     mCurrentAccessory = new UsbAccessory(mAccessoryStrings);
                     Slog.d(TAG, "entering USB accessory mode: " + mCurrentAccessory);
@@ -835,6 +844,8 @@ public class UsbDeviceManager {
             boolean hideNotification = "0".equals(SystemProperties.get("persist.adb.notify"))
                     || CMSettings.Secure.getInt(mContext.getContentResolver(),
                             CMSettings.Secure.ADB_NOTIFY, 1) == 0;
+            boolean alwaysNotify = Settings.Global.getInt(mContext.getContentResolver(),
+                    Settings.Global.ADB_ALWAYS_NOTIFY, 0) != 0;
 
             if (hideNotification) {
                 id = 0;
@@ -844,6 +855,8 @@ public class UsbDeviceManager {
                 id = com.android.internal.R.string.adb_active_notification_title;
             } else if (netAdbActive) {
                 id = com.android.internal.R.string.adb_net_active_notification_title;
+            } else if (mAdbEnabled && alwaysNotify) {
+                id = com.android.internal.R.string.adb_not_connected_notification_title;
             } else {
                 id = 0;
             }
@@ -895,6 +908,7 @@ public class UsbDeviceManager {
         private String getDefaultFunctions() {
             String func = SystemProperties.get(USB_PERSISTENT_CONFIG_PROPERTY,
                     UsbManager.USB_FUNCTION_NONE);
+            func = UsbManager.removeFunction(func, "charging");
             if (UsbManager.USB_FUNCTION_NONE.equals(func)) {
                 func = UsbManager.USB_FUNCTION_MTP;
             }
@@ -976,6 +990,8 @@ public class UsbDeviceManager {
                 id = com.android.internal.R.string.adb_active_custom_tile_usb;
             } else if (netAdbActive) {
                 id = com.android.internal.R.string.adb_active_custom_tile_net;
+            } else {
+                id = com.android.internal.R.string.adb_active_custom_tile_not_connected;
             }
 
             Resources res = mContext.getResources();

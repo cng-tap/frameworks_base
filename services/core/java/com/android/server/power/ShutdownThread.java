@@ -460,12 +460,12 @@ public final class ShutdownThread extends Thread {
         if (um.hasUserRestriction(UserManager.DISALLOW_SAFE_BOOT)) {
             return;
         }
-
+        final Context uiContext = getUiContext(context);
         mReboot = true;
         mRebootSafeMode = true;
         mRebootUpdate = false;
         mRebootReason = null;
-        shutdownInner(context, confirm);
+        shutdownInner(uiContext, confirm);
     }
 
     private static void beginShutdownSequence(Context context) {
@@ -775,6 +775,16 @@ public final class ShutdownThread extends Thread {
             }
         };
 
+        final String cryptoStatus = SystemProperties.get("ro.crypto.state", "unsupported");
+        final boolean isEncrypted = "encrypted".equalsIgnoreCase(cryptoStatus);
+
+        if (mRebootUpdate && isEncrypted) {
+            sInstance.setRebootProgress(MOUNT_SERVICE_STOP_PERCENT, null);
+
+            // If it's to reboot to install update, invoke uncrypt via init service.
+            uncrypt();
+        }
+
         Log.i(TAG, "Shutting down MountService");
 
         // Set initial variables and time out time.
@@ -809,12 +819,6 @@ public final class ShutdownThread extends Thread {
                 } catch (InterruptedException e) {
                 }
             }
-        }
-        if (mRebootUpdate) {
-            sInstance.setRebootProgress(MOUNT_SERVICE_STOP_PERCENT, null);
-
-            // If it's to reboot to install update, invoke uncrypt via init service.
-            uncrypt();
         }
 
         rebootOrShutdown(mContext, mReboot, mRebootReason);
@@ -1147,7 +1151,7 @@ public final class ShutdownThread extends Thread {
             if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
                 uiContext.setTheme(com.android.internal.R.style.Theme_Leanback_Dialog_Alert);
             } else  {
-                uiContext.setTheme(android.R.style.Theme_DeviceDefault_Light_DarkActionBar);
+                uiContext.setTheme(com.android.internal.R.style.Theme_Power_Dialog);
             }
         }
         return uiContext != null ? uiContext : context;

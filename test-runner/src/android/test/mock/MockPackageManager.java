@@ -594,6 +594,12 @@ public class MockPackageManager extends PackageManager {
 
     /** {@hide} */
     @Override
+    public List<VolumeInfo> getPackageCandidateVolumesForceable(ApplicationInfo app) {
+        throw new UnsupportedOperationException();
+    }
+
+    /** {@hide} */
+    @Override
     public int movePrimaryStorage(VolumeInfo vol) {
         throw new UnsupportedOperationException();
     }
@@ -904,7 +910,8 @@ public class MockPackageManager extends PackageManager {
      * @hide
      */
     @Override
-    public boolean isComponentProtected(String callingPackage, ComponentName componentName) {
+    public boolean isComponentProtected(String callingPackage, int callingUid,
+            ComponentName componentName) {
         throw new UnsupportedOperationException();
     }
 

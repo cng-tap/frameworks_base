@@ -27,6 +27,7 @@ import android.database.ContentObserver;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.Spannable;
@@ -45,10 +46,7 @@ import com.android.systemui.cm.UserContentObserver;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.TimeZone;
 
 import libcore.icu.LocaleData;
@@ -62,6 +60,8 @@ public class Clock extends TextView implements DemoMode {
     private String mClockFormatString;
     private SimpleDateFormat mClockFormat;
     private Locale mLocale;
+
+    private static final int TIME_ONE_SECOND    = 999;
 
     public static final int AM_PM_STYLE_NORMAL  = 0;
     public static final int AM_PM_STYLE_SMALL   = 1;
@@ -79,6 +79,9 @@ public class Clock extends TextView implements DemoMode {
 
     public static final int STYLE_DATE_LEFT  = 0;
     public static final int STYLE_DATE_RIGHT = 1;
+
+    public static final int CLOCK_SECONDS_GONE = 0;
+    public static final int CLOCK_SECONDS_VISIBLE = 1;
 
     public static final int FONT_NORMAL = 0;
     public static final int FONT_ITALIC = 1;
@@ -106,10 +109,13 @@ public class Clock extends TextView implements DemoMode {
     public static final int FONT_NOTOSERIF_BOLD = 23;
     public static final int FONT_NOTOSERIF_BOLD_ITALIC = 24;
 
+    protected int mClockSeconds = CLOCK_SECONDS_GONE;
     protected int mClockDateDisplay = CLOCK_DATE_DISPLAY_GONE;
     protected int mClockDateStyle = CLOCK_DATE_STYLE_REGULAR;
     private int mClockFontStyle = FONT_NORMAL;
     private int mClockFontSize = 14;
+    protected int mclockColor;
+    protected int mClockColorSwitch;
 
     private SettingsObserver mSettingsObserver;
 
@@ -130,7 +136,13 @@ public class Clock extends TextView implements DemoMode {
                     .getUriFor(Settings.System.STATUS_BAR_DATE_FORMAT), false,
                     this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System
+                    .getUriFor(Settings.System.CLOCK_USE_SECOND), false,
+                    this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUSBAR_CLOCK_COLOR), false,
+                    this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System
+                    .getUriFor(Settings.System.STATUSBAR_CLOCK_COLOR_SWITCH), false,
                     this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System
                     .getUriFor(Settings.System.STATUSBAR_CLOCK_FONT_STYLE), false,
@@ -149,9 +161,6 @@ public class Clock extends TextView implements DemoMode {
             updateSettings();
         }
     }
-
-    private final Handler handler = new Handler();
-    TimerTask second;
 
     public Clock(Context context) {
         this(context, null);
@@ -225,36 +234,21 @@ public class Clock extends TextView implements DemoMode {
                 updateSettings();
                 return;
             }
-            updateClock();
+            if (mClockSeconds == CLOCK_SECONDS_GONE) {
+                updateClock();
+            }
         }
     };
 
     final void updateClock() {
         if (mDemoMode || mCalendar == null) return;
-
-        ContentResolver resolver = mContext.getContentResolver();
-
-        mClockFontStyle = Settings.System.getIntForUser(resolver,
-                Settings.System.STATUSBAR_CLOCK_FONT_STYLE, FONT_NORMAL,
-                UserHandle.USER_CURRENT);
-        mClockFontSize = Settings.System.getIntForUser(resolver,
-                Settings.System.STATUSBAR_CLOCK_FONT_SIZE, 14,
-                UserHandle.USER_CURRENT);
-
-        int defaultColor = mContext.getResources().getColor(R.color.status_bar_clock_color);
-        int clockColor = Settings.System.getIntForUser(resolver,
-                Settings.System.STATUSBAR_CLOCK_COLOR, defaultColor,
-                UserHandle.USER_CURRENT);
-        if (clockColor == Integer.MIN_VALUE) {
-            // flag to reset the color
-            clockColor = defaultColor;
-        }
-        setTextColor(clockColor);
-        getFontStyle(mClockFontStyle);
-        setTextSize(mClockFontSize);
-
         mCalendar.setTimeInMillis(System.currentTimeMillis());
         setText(getSmallTime());
+        if (mClockColorSwitch == 1) {
+            setTextColor(mclockColor);
+        }
+        getFontStyle(mClockFontStyle);
+        setTextSize(mClockFontSize);
     }
 
     private final CharSequence getSmallTime() {
@@ -267,14 +261,9 @@ public class Clock extends TextView implements DemoMode {
 
         SimpleDateFormat sdf;
         String format = is24 ? d.timeFormat_Hm : d.timeFormat_hm;
-
-        // replace seconds directly in format, not in result
-        if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.CLOCK_USE_SECOND, 0) == 1) {
-            String temp = format;
-            format = temp.replaceFirst("mm","mm:ss");
+        if (mClockSeconds == CLOCK_SECONDS_VISIBLE) {
+            format = format.replaceFirst("mm","mm:ss");
         }
-
         if (!format.equals(mClockFormatString)) {
             /*
              * Search for an unquoted "a" in the format string, so we can
@@ -333,7 +322,7 @@ public class Clock extends TextView implements DemoMode {
                 dateString = DateFormat.format(clockDateFormat, now) ;
             }
             if (mClockDateStyle == CLOCK_DATE_STYLE_LOWERCASE) {
-                // When Date style is small, convert date to lowercase
+                // When Date style is small, convert date to uppercase
                 dateResult = dateString.toString().toLowerCase();
             } else if (mClockDateStyle == CLOCK_DATE_STYLE_UPPERCASE) {
                 dateResult = dateString.toString().toUpperCase();
@@ -392,32 +381,41 @@ public class Clock extends TextView implements DemoMode {
 
         mClockFormatString = "";
 
+        mClockSeconds = Settings.System.getIntForUser(resolver,
+                Settings.System.CLOCK_USE_SECOND, CLOCK_SECONDS_GONE,
+                UserHandle.USER_CURRENT);
+        if (mClockSeconds == CLOCK_SECONDS_VISIBLE) {
+                mSecondsHandler.postDelayed(mRunnable, TIME_ONE_SECOND);
+        } else {
+                clearHandlerCallbacks();
+        }
+
         mClockDateDisplay = Settings.System.getIntForUser(resolver,
                 Settings.System.STATUS_BAR_DATE, CLOCK_DATE_DISPLAY_GONE,
                 UserHandle.USER_CURRENT);
         mClockDateStyle = Settings.System.getIntForUser(resolver,
                 Settings.System.STATUS_BAR_DATE_STYLE, CLOCK_DATE_STYLE_REGULAR,
                 UserHandle.USER_CURRENT);
-
-        second = new TimerTask()
-        {
-            @Override
-            public void run()
-             {
-                Runnable updater = new Runnable()
-                  {
-                   public void run()
-                   {
-                       updateClock();
-                   }
-                  };
-                handler.post(updater);
-             }
-        };
-        Timer timer = new Timer();
-        timer.schedule(second, 0, 1001);
-
-        updateClock();
+        mClockFontStyle = Settings.System.getIntForUser(resolver,
+                Settings.System.STATUSBAR_CLOCK_FONT_STYLE, FONT_NORMAL,
+                UserHandle.USER_CURRENT);
+        mClockFontSize = Settings.System.getIntForUser(resolver,
+                Settings.System.STATUSBAR_CLOCK_FONT_SIZE, 14,
+                UserHandle.USER_CURRENT);
+        int defaultColor = getResources().getColor(R.color.status_bar_clock_color);
+        mclockColor = Settings.System.getIntForUser(resolver,
+                Settings.System.STATUSBAR_CLOCK_COLOR, defaultColor,
+                UserHandle.USER_CURRENT);
+        mClockColorSwitch = Settings.System.getIntForUser(resolver,
+                Settings.System.STATUSBAR_CLOCK_COLOR_SWITCH, 0,
+                UserHandle.USER_CURRENT);
+        if (mclockColor == Integer.MIN_VALUE) {
+            // flag to reset the color
+            mclockColor = defaultColor;
+        }
+        if (mAttached) {
+            updateClock();
+        }
     }
 
     public void getFontStyle(int font) {
@@ -536,5 +534,29 @@ public class Clock extends TextView implements DemoMode {
         mClockFormatString = "";
         updateClock();
     }
-}
 
+    private Handler mSecondsHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            clearHandlerCallbacks();
+            if(mClockSeconds == CLOCK_SECONDS_VISIBLE) {
+                mSecondsHandler.postDelayed(mRunnable, TIME_ONE_SECOND);
+            }
+            updateClock();
+        }
+    };
+
+    private Runnable mRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if(mClockSeconds == CLOCK_SECONDS_VISIBLE) {
+                mSecondsHandler.sendEmptyMessage(0);
+            }
+        }
+    };
+
+    private void clearHandlerCallbacks() {
+        mSecondsHandler.removeCallbacks(mRunnable);
+        mSecondsHandler.removeMessages(0);
+    }
+}

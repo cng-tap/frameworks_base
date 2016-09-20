@@ -174,17 +174,6 @@
   <string name="dynamic_qs_tile_next_alarm_label">Επόμενο ξυπνητήρι</string>
   <string name="dynamic_qs_tile_ime_selector_label">Επιλογέας μεθόδου εισόδου</string>
   <string name="dynamic_qs_tile_su_label">Πρόσβαση root</string>
-  <!-- LiveDisplay strings -->
-  <string name="accessibility_quick_settings_live_display_off">Ανενεργό LiveDisplay.</string>
-  <string name="accessibility_quick_settings_live_display_auto">LiveDisplay: αυτόματη λειτουργία.</string>
-  <string name="accessibility_quick_settings_live_display_day">LiveDisplay: λειτουργία ημέρας.</string>
-  <string name="accessibility_quick_settings_live_display_night">LiveDisplay: λειτουργία νύχτας.</string>
-  <string name="accessibility_quick_settings_live_display_outdoor">LiveDisplay: λειτουργία εξωτερικού χώρου.</string>
-  <string name="accessibility_quick_settings_live_display_changed_off">Το LiveDisplay απενεργοποιήθηκε.</string>
-  <string name="accessibility_quick_settings_live_display_changed_auto">Το LiveDisplay άλλαξε σε αυτόματη λειτουργία.</string>
-  <string name="accessibility_quick_settings_live_display_changed_day">Το LiveDisplay άλλαξε σε λειτουργία ημέρας.</string>
-  <string name="accessibility_quick_settings_live_display_changed_night">Το LiveDisplay άλλαξε σε λειτουργία νύχτας.</string>
-  <string name="accessibility_quick_settings_live_display_changed_outdoor">Το LiveDisplay άλλαξε σε λειτουργία εξωτερικού χώρου.</string>
   <string name="quick_settings_title_advanced_location">Προηγμένη ρύθμιση τοποθεσίας</string>
   <!-- Content description of the location tile in quick settings when on, battery saving mode (not shown on the screen). [CHAR LIMIT=NONE] -->
   <string name="accessibility_quick_settings_location_battery_saving">Αναφορά τοποθεσίας: λειτουργία εξοικονόμησης μπαταρίας.</string>
@@ -225,4 +214,9 @@
   <string name="accessibility_dock_battery_level">Μπαταρία βάσης σύνδεσης <xliff:g id="number">%d</xliff:g> τοις εκατό.</string>
   <!-- Play queue -->
   <string name="play_queue_extention">Εμφάνιση ουράς αναπαραγωγής</string>
+  <!-- Path data for portrait battery -->
+  <!-- Path data for landscape battery -->
+  <!-- Path data for circle battery -->
+  <!-- Weather string format in keyguard -->
+  <string name="keyguard_status_view_weather_format"><xliff:g id="temp">%1$s</xliff:g> <xliff:g id="condition">%2$s</xliff:g></string>
 </resources>

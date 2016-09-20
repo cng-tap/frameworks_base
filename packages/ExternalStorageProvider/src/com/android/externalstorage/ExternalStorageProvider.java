@@ -169,6 +169,14 @@ public class ExternalStorageProvider extends DocumentsProvider {
                     root.visiblePath = null;
                 }
                 root.path = volume.getInternalPathForUser(userId);
+
+                // Force all ext4/f2fs sdcard acccess through the sdcard FUSE layer to ensure the
+                // correct permissions for accessing files and directories.
+                if (volume.getType() == VolumeInfo.TYPE_PUBLIC && root.visiblePath != null
+                    && ("ext4".equals(volume.fsType) || "f2fs".equals(volume.fsType))) {
+                    root.path = root.visiblePath;
+                }
+
                 root.docId = getDocIdForFile(root.path);
 
             } catch (FileNotFoundException e) {
@@ -380,7 +388,7 @@ public class ExternalStorageProvider extends DocumentsProvider {
 
     @Override
     public void deleteDocument(String docId) throws FileNotFoundException {
-        final File file = getFileForDocId(docId);
+        final File file = getFileForDocId(docId,true);
         final boolean isDirectory = file.isDirectory();
         if (isDirectory) {
             FileUtils.deleteContents(file);

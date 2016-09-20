@@ -91,7 +91,7 @@ public class ResolverActivity extends Activity {
     private ResolveListAdapter mAdapter;
     private PackageManager mPm;
     private boolean mSafeForwardingMode;
-    private boolean mAlwaysUseOption;
+    /*package*/ boolean mAlwaysUseOption;
     private AbsListView mAdapterView;
     private ViewGroup mFilteredItemContainer;
     private Button mAlwaysButton;
@@ -543,7 +543,18 @@ public class ResolverActivity extends Activity {
             // so we will now finish ourself since being no longer visible,
             // the user probably can't get back to us.
             if (!isChangingConfigurations()) {
-                finish();
+                if (mResolvingHome) {
+                    List<android.app.ActivityManager.RunningTaskInfo> tasks = null;
+                    try {
+                        tasks = ActivityManagerNative.getDefault().getTasks(2, 0);
+                    } catch (RemoteException e) {
+                    }
+                    if (tasks != null && tasks.size() > 1) {
+                        finish();
+                    }
+                } else {
+                    finish();
+                }
             }
         }
     }
@@ -1571,7 +1582,7 @@ public class ResolverActivity extends Activity {
             return mDisplayList.get(index);
         }
 
-        public final View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(int position, View convertView, ViewGroup parent) {
             View view = convertView;
             if (view == null) {
                 view = createView(parent);

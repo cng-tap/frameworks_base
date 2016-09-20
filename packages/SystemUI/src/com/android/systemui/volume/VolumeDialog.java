@@ -36,6 +36,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.media.AudioManager;
 import android.media.AudioSystem;
 import android.os.Debug;
@@ -106,7 +107,6 @@ public class VolumeDialog {
     private final SpTexts mSpTexts;
     private final SparseBooleanArray mDynamic = new SparseBooleanArray();
     private final KeyguardManager mKeyguard;
-    private final AudioManager mAudioManager;
     private final int mExpandButtonAnimationDuration;
     private final ZenFooter mZenFooter;
     private final LayoutTransition mLayoutTransition;
@@ -135,6 +135,14 @@ public class VolumeDialog {
     // Volume dialog alpha
     private int mVolumeDialogAlpha;
 
+    // Volume dialog stroke
+    private int mVolumeDialogStroke;
+    private int mCustomStrokeColor;
+    private int mCustomStrokeThickness;
+    private int mCustomCornerRadius;
+    private int mCustomDashWidth;
+    private int mCustomDashGap;
+
     public VolumeDialog(Context context, int windowType, VolumeDialogController controller,
             ZenModeController zenModeController, Callback callback) {
         mContext = context;
@@ -142,7 +150,6 @@ public class VolumeDialog {
         mCallback = callback;
         mSpTexts = new SpTexts(mContext);
         mKeyguard = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
-        mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
 
         mDialog = new CustomDialog(mContext);
 
@@ -479,9 +486,11 @@ public class VolumeDialog {
     private int computeTimeoutH() {
         if (mAccessibility.mFeedbackEnabled) return 20000;
         if (mSafetyWarning != null) return 5000;
-        if (mExpanded || mExpandButtonAnimationRunning) return 5000;
-        if (mActiveStream == AudioManager.STREAM_MUSIC) return 1500;
-        return 3000;
+        int mVolumeDialogTimeout = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.VOLUME_DIALOG_TIMEOUT, 3000);
+        if (mExpanded || mExpandButtonAnimationRunning) return mVolumeDialogTimeout;
+        if (mActiveStream == AudioManager.STREAM_MUSIC) return mVolumeDialogTimeout;
+        return mVolumeDialogTimeout;
     }
 
     protected void dismissH(int reason) {
@@ -592,6 +601,7 @@ public class VolumeDialog {
         final VolumeRow activeRow = getActiveRow();
         updateFooterH();
         updateExpandButtonH();
+        setVolumeStroke();
         setVolumeAlpha();
         if (!mShowing) {
             trimObsoleteH();
@@ -665,8 +675,7 @@ public class VolumeDialog {
     private void updateFooterH() {
         if (D.BUG) Log.d(TAG, "updateFooterH");
         final boolean wasVisible = mZenFooter.getVisibility() == View.VISIBLE;
-        final boolean visible = mState.zenMode != Global.ZEN_MODE_OFF
-                && mAudioManager.isStreamAffectedByRingerMode(mActiveStream);
+        final boolean visible = mState.zenMode != Global.ZEN_MODE_OFF;
         if (wasVisible != visible && !visible) {
             prepareForCollapse();
         }
@@ -1181,6 +1190,42 @@ public class VolumeDialog {
             if (mDialogView != null) {
                 mDialogView.getBackground().setAlpha(mVolumeDialogAlpha);
             }
+        }
+    }
+
+    public void setVolumeStroke () {
+        mVolumeDialogStroke = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.VOLUME_DIALOG_STROKE, 1);
+        mCustomStrokeColor = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.VOLUME_DIALOG_STROKE_COLOR, mContext.getResources().getColor(R.color.system_accent_color));
+        mCustomStrokeThickness = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.VOLUME_DIALOG_STROKE_THICKNESS, 4);
+        mCustomCornerRadius = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.VOLUME_DIALOG_CORNER_RADIUS, 10);
+        mCustomDashWidth = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.VOLUME_DIALOG_STROKE_DASH_WIDTH, 0);
+        mCustomDashGap = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.VOLUME_DIALOG_STROKE_DASH_GAP, 10);
+
+        final GradientDrawable volumeDialogGd = new GradientDrawable();
+
+        if (mVolumeDialogStroke == 0) { // Disable by setting border thickness to 0
+            volumeDialogGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
+            volumeDialogGd.setStroke(0, mContext.getResources().getColor(R.color.system_accent_color));
+            volumeDialogGd.setCornerRadius(mCustomCornerRadius);
+            mDialogView.setBackground(volumeDialogGd);
+        } else if (mVolumeDialogStroke == 1) { // use accent color for border
+            volumeDialogGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
+            volumeDialogGd.setStroke(mCustomStrokeThickness, mContext.getResources().getColor(R.color.system_accent_color),
+                    mCustomDashWidth, mCustomDashGap);
+        } else if (mVolumeDialogStroke == 2) { // use custom border color
+            volumeDialogGd.setColor(mContext.getResources().getColor(R.color.system_primary_color));
+            volumeDialogGd.setStroke(mCustomStrokeThickness, mCustomStrokeColor, mCustomDashWidth, mCustomDashGap);
+        }
+
+        if (mVolumeDialogStroke != 0) {
+            volumeDialogGd.setCornerRadius(mCustomCornerRadius);
+            mDialogView.setBackground(volumeDialogGd);
         }
     }
 }
